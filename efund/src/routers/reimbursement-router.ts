@@ -1,38 +1,98 @@
 import express, { Request, Response, NextFunction } from 'express'
 import { Reimbursement, ReimbursementStatus, ReimbursementType } from "../models/Reimbursement";
+import { reimbursementStatusRouter } from './reimbursementStatus-router';
+import { InvalidEntryError } from '../errors/InvalidEntryError';
+import { reimbursementAuthorRouter } from './reimbursementAuthor-router';
 
 export const reimbursementRouter = express.Router()
 
+// Route to reimbursement by status lookup
+reimbursementRouter.use('/status', reimbursementStatusRouter);
+
+// Route to reimbursement by author lookup
+reimbursementRouter.use('/author', reimbursementAuthorRouter);
+
 // Get all reimbursements
-reimbursementRouter.get('/', (req: Request, res: Response, next: NextFunction) => {
+reimbursementRouter.get('/', (req:Request,res:Response,next:NextFunction)=>{
     res.json(reimbursements)
 })
 
-//get reimbursement by status
-reimbursementRouter.get('/:statusId', (req:Request, res:Response)=>{
-    let {statusId} = req.params
-    if(isNaN(+statusId)){
-        
-        res.status(400).send('statusId needs to be a number')
-    }else {
-        let found = false
-        let found_reimbursements = []
-
-        reimbursements.forEach(reimbursement => {
-            if (reimbursement.status === +statusId) {
-                found_reimbursements.push(reimbursement)
-                res.json(reimbursement)
-                found = true 
-            }
-        })
-        
-        if(!found){
-            res.status(404).send('Reimbursement Not Found')
-        }
+// Submit a reimbursement
+reimbursementRouter.post('/', (req:Request, res:Response, next:NextFunction)=>{
+    let {
+        reimbursementId = 0,
+        author,
+        amount,
+        dateSubmitted,
+        dateResolved,
+        description,
+        resolver,
+        status,
+        type
+    } = req.body
+    if(reimbursementId && author && amount && dateSubmitted && dateResolved && description && resolver && status && type){
+        reimbursements.push({reimbursementId, author, amount, dateSubmitted, dateResolved, description, resolver, status, type})
+        res.status(201).send(reimbursements[reimbursements.length-1]);
+    } else{
+        console.log(`reimbursement id: ${reimbursementId}`)
+        throw new InvalidEntryError
     }
 })
 
-// Get reimbursements by type
+// Update Reimbursement
+reimbursementRouter.patch('/', (req:Request, res:Response, next:NextFunction)=>{
+    let id = req.body.reimbursementId;
+    if(!id){
+        throw InvalidEntryError
+    }else if(isNaN(+id)){
+        res.status(400).send("Reimbursement Id must be a number");
+    }else{
+        let found = false;
+        for(const reimbursement of reimbursements){
+            if(reimbursement.reimbursementId === +id){
+                let author = req.body.author;
+                let amount = req.body.amount;
+                let dateSubmitted = req.body.dateSubmitted;
+                let dateResolved = req.body.dateResolved;
+                let description = req.body.description;
+                let resolver = req.body.resolver;
+                let status = req.body.status;
+                let type = req.body.type;
+
+                if(author){
+                    reimbursement.author = author;
+                }
+                if(amount){
+                    reimbursement.amount = amount;
+                }
+                if(dateSubmitted){
+                    reimbursement.dateSubmitted = dateSubmitted;
+                }
+                if(dateResolved){
+                    reimbursement.dateResolved = dateResolved;
+                }
+                if(description){
+                    reimbursement.description = description;
+                }
+                if (resolver){
+                    reimbursement.resolver = resolver;
+                }
+                if (status){
+                    reimbursement.status = status;
+                }
+                if (type){
+                    reimbursement.type = type;
+                }
+
+                res.json(reimbursement);
+                found = true;
+            }
+        }
+        if(!found){
+            res.status(404).send('Reimbursment not found')
+        }
+    }
+})
 
 export let reimbursements: Reimbursement[] = [
     {
