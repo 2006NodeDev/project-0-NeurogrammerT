@@ -9,22 +9,22 @@ userRouter.get('/', (req:Request,res:Response,next:NextFunction)=>{
     res.json(users)
 })
 
-//get by id
+//Get users by id
 userRouter.get('/:id', (req:Request, res:Response)=>{
     let {id} = req.params
     if(isNaN(+id)){
-        // send a response telling them they need to give us a number
-        res.status(400).send('Id needs to be a number')// the error way is better because it scales easier, fewer places you have to change code if you want to refactor
+        
+        res.status(400).send('Id must be a number')
     } else {
         let found = false
         for(const user of users){
             if(user.userId === +id){
-                res.json(user)// successfully foundthe user based on id
+                res.json(user)
                 found = true
             }
         }
         if(!found){
-            res.status(404).send('User Not Found')//the id doesn't exist
+            res.status(404).send('User Not Found')
         }
     }
 })

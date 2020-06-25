@@ -8,45 +8,29 @@ reimbursementRouter.get('/', (req: Request, res: Response, next: NextFunction) =
     res.json(reimbursements)
 })
 
-//Get reimbursement by id
-reimbursementRouter.get('/:id', (req: Request, res: Response) => {
-    let { id } = req.params
-    if (isNaN(+id)) {
-        // send a response telling them they need to give us a number
-        res.status(400).send('Id needs to be a number')// the error way is better because it scales easier, fewer places you have to change code if you want to refactor
-    } else {
+//get reimbursement by status
+reimbursementRouter.get('/:statusId', (req:Request, res:Response)=>{
+    let {statusId} = req.params
+    if(isNaN(+statusId)){
+        
+        res.status(400).send('statusId needs to be a number')
+    }else {
         let found = false
-        for (const reimbursement of reimbursements) {
-            if (reimbursement.reimbursementId === +id) {
-                res.json(reimbursement)// successfully foundthe user based on id
-                found = true
+        let found_reimbursements = []
+
+        reimbursements.forEach(reimbursement => {
+            if (reimbursement.status === +statusId) {
+                found_reimbursements.push(reimbursement)
+                res.json(reimbursement)
+                found = true 
             }
-        }
-        if (!found) {
-            res.status(404).send('Reimbursement Not Found')//the id doesn't exist
+        })
+        
+        if(!found){
+            res.status(404).send('Reimbursement Not Found')
         }
     }
 })
-
-//get reimbursement by status
-// reimbursementRouter.get('/:statusId', (req:Request, res:Response)=>{
-//     let {statusId} = req.params
-//     if(isNaN(+statusId)){
-//         // send a response telling them they need to give us a number
-//         res.status(400).send('statusId needs to be a number')// the error way is better because it scales easier, fewer places you have to change code if you want to refactor
-//     }else {
-//         let found = false
-//         for(const reimbursement of reimbursements){
-//             if(reimbursement.status === +statusId){
-//                 res.json(reimbursement)// successfully foundthe user based on id
-//                 found = true
-//             }
-//         }
-//         if(!found){
-//             res.status(404).send('User Not Found')//the id doesn't exist
-//         }
-//     }
-// })
 
 // Get reimbursements by type
 
