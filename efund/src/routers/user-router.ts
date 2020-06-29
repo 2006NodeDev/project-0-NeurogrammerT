@@ -2,9 +2,12 @@ import express, { Request, Response, NextFunction } from 'express'
 import { User, Role } from '../models/User'
 import { InvalidEntryError } from '../errors/InvalidEntryError'
 import { getAllUsers, getUserById, saveOneUser, updateOneUser, deleteUser } from '../daos/user-dao'
+import { authorizationMiddleware } from '../middleware/authorization-middleware'
 
 
 export const userRouter = express.Router()
+
+userRouter.use(authorizationMiddleware)
 
 // Get all users
 userRouter.get('/', async (req:Request,res:Response,next:NextFunction)=>{
