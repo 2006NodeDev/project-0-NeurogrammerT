@@ -1,37 +1,38 @@
-import express, { Request, Response} from 'express'
-import { userRouter, users, } from './routers/user-router'
+import express, { Request, Response, NextFunction } from 'express'
+import { userRouter} from './routers/user-router'
 import { reimbursementRouter } from './routers/reimbursement-router'
-import { InvalidEntryError } from './errors/InvalidEntryError'
+import { getUserByUsernameAndPassword } from './daos/user-dao'
 import { AuthenticationError } from './errors/authenticationError'
+import { loggingMiddleware } from './middleware/logging-middleware'
+import { sessionMiddleware } from './middleware/session-middleware'
+
+
 
 const app = express()
 
 app.use(express.json())
 
+app.use(loggingMiddleware)
+app.use(sessionMiddleware)
+
 app.use('/users', userRouter)
 app.use('/reimbursements', reimbursementRouter)
 
-app.post('/login', (req:Request, res:Response)=>{
-    
+app.post('/login', async (req:Request, res:Response, next:NextFunction)=>{
+    // you could use destructuring, see ./routers/book-router
     let username = req.body.username
     let password = req.body.password
-    
+    // if I didn't get a usrname/password send an error and say give me both fields
     if(!username || !password){
-        
-        throw new InvalidEntryError()
+        // make a custom http error and throw it or just send a res
+        throw new AuthenticationError()
     } else {
-        let found = false
-        for(const user of users) {
-            if(user.username === username && user.password === password){
-                
-                req.session.user = user
-                
-                res.json(user)
-                found = true
-            }
-        }
-        if(!found){
-            throw new AuthenticationError()
+        try{
+            let user = await getUserByUsernameAndPassword(username, password)
+            req.session.user = user
+            res.json(user)
+        }catch(e){
+            next(e)
         }
     }
 })

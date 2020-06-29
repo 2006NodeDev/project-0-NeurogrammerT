@@ -1,146 +1,139 @@
 import express, { Request, Response, NextFunction } from 'express'
 import { User, Role } from '../models/User'
+import { InvalidEntryError } from '../errors/InvalidEntryError'
+import { getAllUsers, getUserById, saveOneUser, updateOneUser, deleteUser } from '../daos/user-dao'
 
 
 export const userRouter = express.Router()
 
 // Get all users
-userRouter.get('/', (req:Request,res:Response,next:NextFunction)=>{
-    res.json(users)
+userRouter.get('/', async (req:Request,res:Response,next:NextFunction)=>{
+    try {
+        
+        let allUsers = await getAllUsers() 
+        res.json(allUsers)
+    } catch (e) {
+        next(e)
+    }
 })
 
 //Get users by id
-userRouter.get('/:id', (req:Request, res:Response)=>{
+userRouter.get('/:id', async (req:Request, res:Response,next:NextFunction)=>{
     let {id} = req.params
     if(isNaN(+id)){
         
         res.status(400).send('Id must be a number')
     } else {
-        let found = false
-        for(const user of users){
-            if(user.userId === +id){
-                res.json(user)
-                found = true
-            }
-        }
-        if(!found){
-            res.status(404).send('User Not Found')
+        try {
+            let user = await getUserById(+id)
+            res.json(user)
+        } catch (e) {
+            next(e)
         }
     }
 })
 
+// Save New User
+userRouter.post('/', async (req: Request, res: Response, next: NextFunction) => {
+   
+    let { username, password, firstName, lastName, email, role } = req.body
+    if (!username || !password || !firstName || !lastName || !email || !role) {
+        next(new InvalidEntryError)
+    } else {
+        
+        let newUser: User = {
+            userId: 0,
+            username,
+            password,
+            firstName,
+            lastName,
+            email,
+            role,
+        }
+
+        try {
+            let savedUser = await saveOneUser(newUser)
+            res.json(savedUser)
+        } catch (e) {
+            next(e)
+        }
+    }
+})
+    
 // Update User
-userRouter.patch('/', (req:Request, res:Response, next:NextFunction)=>{
-    let id = req.body.userId;
-
-    if(!id){
-        throw res.status(404).send('User not found')
-    }else if(isNaN(+id)){
-        res.status(400).send("User Id must be a number");
-    }else{
-        let found = false;
-        for(const user of users){
-            if(user.userId === +id){
-
-                let username = req.body.username;
-                let password = req.body.password;
-                let firstName = req.body.firstName;
-                let lastName = req.body.lastName;
-                let email = req.body.email;
-                let role = req.body.role;
-
-                if(username){
-                    user.username = username;
-                }
-                if(password){
-                    user.password = password;
-                }
-                if(firstName){
-                    user.firstName = firstName;
-                }
-                if(lastName){
-                    user.lastName = lastName;
-                }
-                if(email){
-                    user.email = email;
-                }
-                if (role){
-                    user.role = role;
-                }
-
-                res.json(user);
-                found = true;
-            }
+userRouter.patch('/:id', async (req: Request, res: Response, next: NextFunction) => {
+    let { id } = req.params
+    if (isNaN(+id)) {
+        
+        res.status(400).send('Id needs to be a number')
+    } else {
+    
+        let { userId, username, password, firstName, lastName, email, role} = req.body
+        
+        if (!userId) {
+            next(new InvalidEntryError) 
         }
-        if(!found){
-            res.status(404).send('User not found')
+
+        if (userId != id) {
+            next(new InvalidEntryError)
+        }
+
+        let updatedUser: User = {
+            username,
+            password,
+            firstName,
+            lastName,
+            role,
+            userId,
+            email,
+        }
+        updatedUser.email = email || undefined
+        updatedUser.username = username || undefined
+        updatedUser.password = password || undefined
+        updatedUser.role = role || undefined
+        updatedUser.userId = userId || undefined
+        updatedUser.firstName = firstName || undefined
+        updatedUser.lastName = lastName || undefined
+        
+        try {
+            await updateOneUser(updatedUser)
+
+            res.send('You have succesfully updated this user')
+
+        } catch (e) {
+            next(e)
         }
     }
+    })
 
-})
-
-export let users: User[] = [
-    {
-        userId: 1,
-        username: 'FlameHazeShana',
-        password: 'password',
-        firstName: 'Shana',
-        lastName: 'Sakai',
-        email: 'sakais@fhs.net',
-        role: {
-            roleId: 1,
-            role: 'Admin'
+// Delete User
+userRouter.delete('/', async (req: Request, res: Response, next: NextFunction) => {
+   
+        let { userId } = req.body
+    
+        if (!userId) {
+            next(new InvalidEntryError)
+        } else {
+            
+        let deletedUser: User = {
+            
+            username: '',
+            password: '',
+            firstName: '',
+            lastName: '',
+            role: new Role(),
+            userId,
+            email: '',
+            
         }
-    },
-    {
-        userId: 2,
-        username: 'HumanTorchYuji',
-        password: 'password',
-        firstName: 'Yuji',
-        lastName: 'Sakai',
-        email: 'sakaiy@fhs.net',
-        role: {
-            roleId: 2,
-            role: 'Finance Manager'
-        }
-    },
-    {
-        userId: 3,
-        username: 'RibbonMasterMina',
-        password: 'password',
-        firstName: 'Wilhelmina',
-        lastName: 'Carmel',
-        email: 'carmelw@fhs.net',
-        role: {
-            roleId: 3,
-            role: 'Employee'
-          }
-    },
-    {
-        userId: 4,
-        username: 'BombshellDaw',
-        password: 'password',
-        firstName: 'Margery',
-        lastName: 'Daw',
-        email: 'dawm@fhs.net',
-        role: {
-            roleId: 3,
-            role: 'Employee'
-          }
-    }
-]
+        
+        try {
+            await deleteUser(deletedUser)
 
-export let role: Role[] = [
-    {
-        roleId: 1,
-        role: 'Admin'
-    },
-    {
-        roleId: 2,
-        role: 'Finance Manager'
-    },
-    {
-        roleId: 1,
-        role: 'User'
+            res.send('You have succesfully deleted this user')
+
+        } catch (e) {
+            next(e)
+        }
     }
-]
+    })

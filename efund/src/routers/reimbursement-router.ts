@@ -1,26 +1,64 @@
 import express, { Request, Response, NextFunction } from 'express'
-import { Reimbursement, ReimbursementStatus, ReimbursementType } from "../models/Reimbursement";
-import { reimbursementStatusRouter } from './reimbursementStatus-router';
+import { getAllReimbursements, submitReimbursement, updateReimbursement, deleteReimbursement} from '../daos/reimbursement-dao';
+import { reimbursementStatusRouter, getReimbursementByStatus } from './reimbursementStatus-router';
+import { reimbursementAuthorRouter, getReimbursementByUser } from './reimbursementAuthor-router';
 import { InvalidEntryError } from '../errors/InvalidEntryError';
-import { reimbursementAuthorRouter } from './reimbursementAuthor-router';
+import { Reimbursement } from '../models/Reimbursement';
 
-export const reimbursementRouter = express.Router()
+export const reimbursementRouter = express.Router() 
 
 // Route to reimbursement by status lookup
 reimbursementRouter.use('/status', reimbursementStatusRouter);
 
 // Route to reimbursement by author lookup
-reimbursementRouter.use('/author', reimbursementAuthorRouter);
+reimbursementRouter.use('/author/userId', reimbursementAuthorRouter);
 
 // Get all reimbursements
-reimbursementRouter.get('/', (req:Request,res:Response,next:NextFunction)=>{
-    res.json(reimbursements)
+reimbursementRouter.get('/', async (req:Request,res:Response,next:NextFunction)=>{
+    try {
+        
+        let allReimbursements = await getAllReimbursements() 
+        res.json(allReimbursements)
+    } catch (e) {
+        next(e)
+    }
+})
+
+// //get reimbursement by status
+reimbursementStatusRouter.get('/:statusId', async (req:Request, res:Response,next:NextFunction)=>{
+    let {statusId} = req.params
+    if(isNaN(+statusId)){
+        res.status(400).send('statusId needs to be a number')
+    }else {
+        try {
+        
+            let allReimbursementsByStatus = await getReimbursementByStatus(+statusId) 
+            res.json(allReimbursementsByStatus)
+        } catch (e) {
+            next(e)
+        }
+    }
+})
+
+//get reimbursement by user
+reimbursementAuthorRouter.get('/:userId', async (req:Request, res:Response,next:NextFunction)=>{
+    let {userId} = req.params
+    if(isNaN(+userId)){
+        res.status(400).send('statusId needs to be a number')
+    }else {
+        try {
+        
+            let allReimbursementsByUser = await getReimbursementByUser(+userId) 
+            res.json(allReimbursementsByUser)
+        } catch (e) {
+            next(e)
+        }
+    }
 })
 
 // Submit a reimbursement
-reimbursementRouter.post('/', (req:Request, res:Response, next:NextFunction)=>{
+reimbursementRouter.post('/', async (req:Request, res:Response, next:NextFunction)=>{
     let {
-        reimbursementId = 0,
         author,
         amount,
         dateSubmitted,
@@ -30,148 +68,115 @@ reimbursementRouter.post('/', (req:Request, res:Response, next:NextFunction)=>{
         status,
         type
     } = req.body
-    if(reimbursementId && author && amount && dateSubmitted && dateResolved && description && resolver && status && type){
-        reimbursements.push({reimbursementId, author, amount, dateSubmitted, dateResolved, description, resolver, status, type})
-        res.status(201).send(reimbursements[reimbursements.length-1]);
+    if (!author || !amount || !dateSubmitted || !dateResolved || !status || !resolver || !description || !type) {
+        next(new InvalidEntryError) 
     } else{
-        console.log(`reimbursement id: ${reimbursementId}`)
-        throw new InvalidEntryError
+        let newReimbursement: Reimbursement = {
+                reimbursementId: 0,
+                author,
+                amount,
+                dateSubmitted,
+                dateResolved,
+                description,
+                resolver,
+                status,
+                type
+        }
+        
+        try {
+            let savedUser = await submitReimbursement(newReimbursement)
+            res.json(savedUser)
+        } catch (e) {
+            next(e)
+        }
     }
 })
 
 // Update Reimbursement
-reimbursementRouter.patch('/', (req:Request, res:Response, next:NextFunction)=>{
-    let id = req.body.reimbursementId;
-    if(!id){
-        throw InvalidEntryError
-    }else if(isNaN(+id)){
-        res.status(400).send("Reimbursement Id must be a number");
-    }else{
-        let found = false;
-        for(const reimbursement of reimbursements){
-            if(reimbursement.reimbursementId === +id){
-                let author = req.body.author;
-                let amount = req.body.amount;
-                let dateSubmitted = req.body.dateSubmitted;
-                let dateResolved = req.body.dateResolved;
-                let description = req.body.description;
-                let resolver = req.body.resolver;
-                let status = req.body.status;
-                let type = req.body.type;
+reimbursementRouter.patch('/:id', async (req:Request, res:Response, next:NextFunction)=>{
+    let { id } = req.params
+    if (isNaN(+id)) {
+        res.status(400).send('Id needs to be a number')
+    } else {
+        let {
+            reimbursementId,
+            author,
+            amount,
+            dateSubmitted,
+            dateResolved,
+            description,
+            resolver,
+            status,
+            type
+        } = req.body
 
-                if(author){
-                    reimbursement.author = author;
-                }
-                if(amount){
-                    reimbursement.amount = amount;
-                }
-                if(dateSubmitted){
-                    reimbursement.dateSubmitted = dateSubmitted;
-                }
-                if(dateResolved){
-                    reimbursement.dateResolved = dateResolved;
-                }
-                if(description){
-                    reimbursement.description = description;
-                }
-                if (resolver){
-                    reimbursement.resolver = resolver;
-                }
-                if (status){
-                    reimbursement.status = status;
-                }
-                if (type){
-                    reimbursement.type = type;
-                }
+        if (!reimbursementId) {
+            next(new InvalidEntryError)
+        } 
 
-                res.json(reimbursement);
-                found = true;
+        if (reimbursementId != id) {
+            next(new InvalidEntryError)
+        } 
+            let updatedReimbursement: Reimbursement = {
+                reimbursementId,
+                author,
+                amount,
+                dateSubmitted,
+                dateResolved,
+                description,
+                resolver,
+                status,
+                type
             }
-        }
-        if(!found){
-            res.status(404).send('Reimbursment not found')
-        }
+        
+            updatedReimbursement.dateSubmitted = dateSubmitted || undefined
+            updatedReimbursement.dateResolved - dateResolved || undefined
+            updatedReimbursement.resolver = resolver || undefined
+            updatedReimbursement.status = status || undefined
+            updatedReimbursement.author = author || undefined
+            updatedReimbursement.amount - amount || undefined
+            updatedReimbursement.type = type || undefined
+            updatedReimbursement.description = description || undefined
+            updatedReimbursement.reimbursementId = reimbursementId || undefined
+        
+            try {
+                await updateReimbursement(updatedReimbursement)
+                
+                res.send('You have succesfully updated this reimbursement')
+            } catch (e) {
+                next(e)
+            }
     }
 })
 
-export let reimbursements: Reimbursement[] = [
-    {
-        reimbursementId: 1,
-        author: 1,
-        amount: 1000,
-        dateSubmitted: 1,
-        dateResolved: 1,
-        description: 'Company Lunch',
-        resolver: 2,
-        status: 2,
-        type: 3
-    },
-    {
-        reimbursementId: 2,
-        author: 2,
-        amount: 5000,
-        dateSubmitted: 1,
-        dateResolved: 1,
-        description: 'Holiday Bonus',
-        resolver: 1,
-        status: 2,
-        type: 4
-    },
-    {
-        reimbursementId: 3,
-        author: 3,
-        amount: 300,
-        dateSubmitted: 1,
-        dateResolved: 1,
-        description: 'Trip',
-        resolver: 2,
-        status: 1,
-        type: 2
-    },
-    {
-        reimbursementId: 4,
-        author: 4,
-        amount: 100,
-        dateSubmitted: 1,
-        dateResolved: 1,
-        description: 'Hotel',
-        resolver: 2,
-        status: 3,
-        type: 1
-    }
-]
+// Delete Reimbursement
+reimbursementRouter.delete('/', async (req:Request, res:Response, next:NextFunction)=>{
+    
+    let {reimbursementId} = req.body
 
-export let reimbursementStatus: ReimbursementStatus[] = [
-    {
-        statusId: 1,
-        status: 'Pending'
-    },
-    {
-        statusId: 2,
-        status: 'Approved'
-    },
-    {
-        statusId: 3,
-        status: 'Denied'
-    }
-]
+    if (!reimbursementId) {
+        next(new InvalidEntryError)
+    } else {
+            
+        let deletedReimbursement: Reimbursement = {
 
-
-export let reimbursementType: ReimbursementType[] = [
-    {
-        typeId: 1,
-        type: 'Lodging'
-    },
-    {
-        typeId: 2,
-        type: 'Food'
-    },
-    {
-        typeId: 3,
-        type: 'Travel'
-    },
-    {
-        typeId: 4,
-        type: 'Other'
+            reimbursementId,
+            author: 0,
+            amount: 0,
+            dateSubmitted: 0,
+            dateResolved: 0,
+            description: '',
+            resolver:0,
+            status:0,
+            type:0
+        }
+        
+        try {
+            await deleteReimbursement(deletedReimbursement)
+                
+            res.send('You have succesfully deleted this reimbursement')
+        } catch (e) {
+            next(e)
+        }
     }
-]
+})
