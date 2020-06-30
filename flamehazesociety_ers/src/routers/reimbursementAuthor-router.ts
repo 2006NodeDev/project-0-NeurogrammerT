@@ -10,11 +10,10 @@ export const reimbursementAuthorRouter = express.Router()
 
 reimbursementAuthorRouter.use(authenticationMiddleware)
 
-//get reimbursement by author
+//Get a Reimbursement by Author User id
 export async function getReimbursementByUser(id: number):Promise<Reimbursement[]> {
     let client: PoolClient
     try {
-      
         client = await connectionPool.connect()
       
         let results = await client.query(`select rb."reimbursement_id", u."username" as "author", rb."amount", rb."dateSubmitted", rb."dateResolved", rb."description", u2."first_name" as "resolver", rs."status_name" as "status", rt."type_name" as "type"
@@ -28,11 +27,9 @@ export async function getReimbursementByUser(id: number):Promise<Reimbursement[]
         if(e.message === 'User Not Found'){
             throw new ResourceNotFoundError()
         }
-        
         console.log(e)
         throw new Error('Unhandled Error Occured')
     } finally {
-        
         client && client.release()
     }
 }

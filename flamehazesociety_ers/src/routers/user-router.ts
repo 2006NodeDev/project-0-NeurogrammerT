@@ -6,14 +6,16 @@ import { authorizationMiddleware } from '../middleware/authorization-middleware'
 
 
 
+
+
 export const userRouter = express.Router()
 
 userRouter.use(authenticationMiddleware)
 
-// Get all users
-userRouter.get('/', authorizationMiddleware(['Admin']), async (req:Request,res:Response,next:NextFunction)=>{
+// Get All Users
+userRouter.get('/', authorizationMiddleware(['Admin']), async (req: Request, res: Response, next: NextFunction) => {
+    
     try {
-        
         let allUsers = await getAllUsers() 
         res.json(allUsers)
     } catch (e) {
@@ -21,11 +23,12 @@ userRouter.get('/', authorizationMiddleware(['Admin']), async (req:Request,res:R
     }
 })
 
-//Get users by id
-userRouter.get('/:id', async (req:Request, res:Response,next:NextFunction)=>{
-    let {id} = req.params
+//Get Users by id
+userRouter.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
+    
+    let { id } = req.params
+    
     if(isNaN(+id)){
-        
         res.status(400).send('Id must be a number')
     } else {
         try {
@@ -37,29 +40,12 @@ userRouter.get('/:id', async (req:Request, res:Response,next:NextFunction)=>{
     }
 })
 
-// Save New User
+// Save a New User
 userRouter.post('/', authorizationMiddleware(['Admin']), async (req: Request, res: Response, next: NextFunction) => {
    
     let { username, password, firstName, lastName, email, role } = req.body
 
-    if (!username || username === Number) {
-        res.status(400).send('You must enter a valid username as a string') 
-    }
-    if (!password || password === Number) {
-        res.status(400).send('You must enter a valid password as a string') 
-    }
-    if (!firstName || firstName === Number) {
-        res.status(400).send('You must enter a valid first name as a string') 
-    }
-    if (!lastName || lastName === Number) {
-        res.status(400).send('You must enter a valid last name as a string') 
-    }
-    if (!email || email === Number) {
-        res.status(400).send('You must enter a valid email as a string')
-    }
-    if (!role) {
-        res.status(400).send('You must enter a valid role name and role Id as a class object for role: {role_name: "role", roleId: number} Valid role names and ids are: Admin(1), Finance Manager(2), Employee(3)') 
-    }else {
+    if((username = String && username) && (password = String && password) && (firstName = String && firstName) && (lastName = String && lastName) && (email = String && email) && (role.role = String && role.role) && (role.roleId = Number && role.roleId)) {
         
         let newUser: User = {
             userId: 0,
@@ -77,32 +63,34 @@ userRouter.post('/', authorizationMiddleware(['Admin']), async (req: Request, re
         } catch (e) {
             next(e)
         }
+    } else if((!username)){
+        res.status(400).send("You must include a username of type string.")
+    }else if((!password)){
+        res.status(400).send("You must include a password of type string.")
+    }
+    else if((!firstName)){
+        res.status(400).send("You must include a first name of type string.")
+    }
+    else if((!lastName)){
+        res.status(400).send("You must include a last name of type string.")
+    }
+    else if((!email)){
+        res.status(400).send("You must include a email of type string.")
+    }
+    else if((!role.role)){
+        res.status(400).send("You must include a role of type string. Valid roles are Admin(1), (Finance Manager(2), Employee(3))")
+    }
+    else if((!role.roleId)){
+        res.status(400).send("You must include a roleId of type number. Valid roles are Admin(1), (Finance Manager(2), Employee(3))")
     }
 })
     
-// Update User
+// Update a User
 userRouter.patch('/', authorizationMiddleware(['Admin']), async (req: Request, res: Response, next: NextFunction) => {
     
         let { userId, username, password, firstName, lastName, email, role} = req.body
         
-        if (!userId || userId === String || userId < 1) {
-            res.sendStatus(400).send('You must put in a valid user Id number')
-        }
-        if (username === Number) {
-            res.status(400).send('You must enter a valid username as a string') 
-    }
-        if (password === Number) {
-            res.status(400).send('You must enter a valid password as a string') 
-        }
-        if (firstName === Number) {
-            res.status(400).send('You must enter a valid first anme as a string') 
-        }
-        if (lastName === Number) {
-            res.status(400).send('You must enter a valid last name as a string') 
-        }
-        if (email === Number) {
-            res.status(400).send('You must enter a valid email as a string')
-        } else {
+        if((userId = Number && userId))  {
             let updatedUser: User = {
                 username,
                 password,
@@ -129,17 +117,17 @@ userRouter.patch('/', authorizationMiddleware(['Admin']), async (req: Request, r
         catch (e) {
             next(e)
         }
+    } else if((!userId)){
+        res.status(400).send("You must include a userId number for the user you wish to update.")
     }
     })
 
-// Delete User
+// Delete a User
 userRouter.delete('/', authorizationMiddleware(['Admin']), async (req: Request, res: Response, next: NextFunction) => {
    
         let { userId } = req.body
     
-        if (!userId || userId === String || userId < 1) {
-            res.sendStatus(400).send('You must put in a valid user Id number')
-        } else {
+        if((userId = Number && userId))  {
             
         let deletedUser: User = {
             
@@ -161,5 +149,7 @@ userRouter.delete('/', authorizationMiddleware(['Admin']), async (req: Request, 
         } catch (e) {
             next(e)
         }
+    }else if ((!userId)) {
+        res.status(400).send("You must include a userId number for the user you wish to delete.")
     }
     })

@@ -1,7 +1,7 @@
 {
-  "name": "efund",
+  "name": "flamehazesociety_ers",
   "version": "1.0.0",
-  "description": "expense refund system",
+  "description": "Expense reimbursement system for the staff at the Flame Haze Society of Xanadu.",
   "main": "src/index.ts",
   "scripts": {
     "start": "nodemon --exec ts-node src/index.ts",

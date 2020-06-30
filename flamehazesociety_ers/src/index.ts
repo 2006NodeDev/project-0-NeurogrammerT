@@ -19,14 +19,15 @@ app.use('/users', userRouter)
 app.use('/reimbursements', reimbursementRouter)
 
 app.post('/login', async (req:Request, res:Response, next:NextFunction)=>{
-    // you could use destructuring, see ./routers/book-router
+    
     let username = req.body.username
     let password = req.body.password
-    // if I didn't get a usrname/password send an error and say give me both fields
+    
     if(!username || !password){
-        // make a custom http error and throw it or just send a res
+       
         throw new AuthenticationError()
     } else {
+        
         try{
             let user = await getUserByUsernameAndPassword(username, password)
             req.session.user = user
