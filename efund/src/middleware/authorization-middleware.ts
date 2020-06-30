@@ -1,17 +1,31 @@
 import { Request, Response, NextFunction } from "express";
 
-export function authorizationMiddleware(roles:string[]){
+
+
+export function authorizationMiddleware(roles: string[], userId?: boolean){
     return (req:Request, res:Response, next:NextFunction) => {
         let allowed = false
-        for(const role of roles){
-            if(req.session.user.role === role){
+       
+            if(req.session.user.role.role == roles){
+                console.log(roles);
+                
                 allowed = true
-                next()
+
+            }
+        if(userId){
+            let id = +req.params.userId
+
+            if(!isNaN(id)){
+                if(req.session.user.userId == id) {
+                    allowed = true
+                }
             }
         }
-        if(!allowed){
-            
-            res.status(403).send('You have insufficent permissions for this endpoint')
+        
+        if(allowed){
+            next()
+        }else{
+            res.status(401).send('The incoming token has expired');
         }
     }
 
