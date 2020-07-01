@@ -72,6 +72,7 @@ reimbursementRouter.post('/', async (req: Request, res: Response, next:NextFunct
     
     if ((author = Number && author) && (amount = Number && amount) && (dateSubmitted = Date && dateSubmitted) && (description = String && description) && (type = Number && type)) {
 
+        let defaultSubmitDate: Date = new Date()
         let defaultResolveDate: String = "2020-12-31"
         
         let newReimbursement: Reimbursement = {
@@ -86,6 +87,7 @@ reimbursementRouter.post('/', async (req: Request, res: Response, next:NextFunct
                 type
         }
             
+            newReimbursement.dateSubmitted = dateSubmitted || defaultSubmitDate
             newReimbursement.dateResolved = dateResolved || defaultResolveDate
             newReimbursement.resolver = resolver || null
             newReimbursement.status = status || 2
@@ -96,21 +98,30 @@ reimbursementRouter.post('/', async (req: Request, res: Response, next:NextFunct
         } catch (e) {
             next(e)
             }
-        }else if((!author)){
-            res.status(400).send("You must include an author of type number.")
-        }
-        else if((!amount)){
-            res.status(400).send("You must include an amount of type number.")
-        }
-        else if((!dateSubmitted)){
-            res.status(400).send("You must use a valid date format YYYY-MM-DD hh:mm:ss to set a date. dateResolved can be left as 0. However, it's not necessary to submit your reimbursement with dates, as they will default to pre-set timestamps.")
-        }
-        else if((!description)){
-            res.status(400).send("You must include a description of type string.")
-        }
-        else if((!type)){
-            res.status(400).send("You must include a type of type number. Valid types are Lodging(1), Food(2), Travel(3), Other(4)")
-        }
+        }else if ((!author)) {
+                res.status(400).send("You must include a valid author id. This is the same as your user id. Contact your Admin if you are unsure of this number...at your own risk.")
+            }
+            else if((!amount)){
+                res.status(400).send("You must include an reimbursement amount to the nearest whole dollar. If it is over the budget, you'll be getting an earful from your Finance Manager...if he's still alive by the end of the day that is.")
+            }
+            else if((!dateSubmitted)){
+                res.status(400).send("You must use a valid date in format YYYY-MM-DD hh:mm:ss to set a date. Reimbursements submitted later than a month after purchase are at the mercy of the Admin. Please get them in on time, or I'll be at her mercy too.")
+            }
+            else if((!description)){
+                res.status(400).send("You must include a description of your requested reimbursement. Careful not to be too descriptive if you value your job or your life. Shana still hasn't forgotten Margery.")
+            }
+            else if((!type)){
+                res.status(400).send("You must include a valid reimbursement type. Valid types are Lodging(1), Food(2), Travel(3), Other(4) Odds are if you classify it as other, you'll be paying for it on your own dime, but exceptions can be made.")
+            }
+            else if((!dateResolved)){
+                res.status(400).send("Employees, you may disregard the date resolved and leave it at 0, as your request is not yet resolved. The value will be updated by your Finance Manager upon review. Due to a rise in demon activity and an influx of work, it may be a while before review.")
+            }
+            else if((!status)){
+                res.status(400).send("If you're an employee, leave status at 0. Your Finance Manager will update it upon review. For you reference, the valid status codes are: Approved(1), Pending(2), Denied(3). While your Finance Manager may approve a request at his discretion, all approvals are subject to the will of the Admin. Catch her on a good day.")
+            }
+            else if((!resolver)){
+                res.status(400).send("You should keep the resolver field at 0, as your Finance Manager will update it upon making his decision. As the Admin has total authority, in some cases she may resolve your requests instead. Good luck.")
+            }
 })
 
 // Update a Reimbursement

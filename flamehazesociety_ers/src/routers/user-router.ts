@@ -64,24 +64,24 @@ userRouter.post('/', authorizationMiddleware(['Admin']), async (req: Request, re
             next(e)
         }
     } else if((!username)){
-        res.status(400).send("You must include a username of type string.")
+        res.status(400).send("You must include a username. This username must be unique, not that I think you are or anything.")
     }else if((!password)){
-        res.status(400).send("You must include a password of type string.")
+        res.status(400).send("You must include a password. Don't use sappy stuff, I'm judging you.")
     }
     else if((!firstName)){
-        res.status(400).send("You must include a first name of type string.")
+        res.status(400).send("You must include your first name. Not that I mind calling you swine.")
     }
     else if((!lastName)){
-        res.status(400).send("You must include a last name of type string.")
+        res.status(400).send("You must include your last name. I need to know who to look up if you cross me.")
     }
     else if((!email)){
-        res.status(400).send("You must include a email of type string.")
+        res.status(400).send("You must include an email. Your last name, first initial and @fhs.net is the only valid option.")
     }
     else if((!role.role)){
-        res.status(400).send("You must include a role of type string. Valid roles are Admin(1), (Finance Manager(2), Employee(3))")
+        res.status(400).send("You must include a role. Valid roles are Admin(1), Finance Manager(2), Employee(3). Know your place.")
     }
     else if((!role.roleId)){
-        res.status(400).send("You must include a roleId of type number. Valid roles are Admin(1), (Finance Manager(2), Employee(3))")
+        res.status(400).send("You must include a roleId. Valid roles are Admin(1), Finance Manager(2), Employee(3). Only the Admin, a.k.a myself can update this info, so who's the real baka here?")
     }
 })
     
