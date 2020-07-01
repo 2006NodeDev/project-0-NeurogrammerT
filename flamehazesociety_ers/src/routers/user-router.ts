@@ -24,7 +24,7 @@ userRouter.get('/', authorizationMiddleware(['Admin']), async (req: Request, res
 })
 
 //Get Users by id
-userRouter.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
+userRouter.get('/:id', authorizationMiddleware(['Admin'], true), async (req: Request, res: Response, next: NextFunction) => {
     
     let { id } = req.params
     
