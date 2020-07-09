@@ -5,6 +5,7 @@ import { getUserByUsernameAndPassword } from './daos/user-dao'
 import { AuthenticationError } from './errors/authenticationError'
 import { loggingMiddleware } from './middleware/logging-middleware'
 import { sessionMiddleware } from './middleware/session-middleware'
+import { corsFilter } from './middleware/cors-filter'
 
 
 
@@ -13,6 +14,7 @@ const app = express()
 app.use(express.json())
 
 app.use(loggingMiddleware)
+app.use(corsFilter)
 app.use(sessionMiddleware)
 
 app.use('/users', userRouter)
@@ -51,7 +53,7 @@ app.use((err, req, res, next) => {
     }
 })
 
-app.listen(2006, () => {
+app.listen(2020, () => {
     console.log('Server Has Started');
     
 })
