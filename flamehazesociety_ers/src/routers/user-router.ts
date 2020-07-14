@@ -24,7 +24,7 @@ userRouter.get('/', authorizationMiddleware(['Admin']), async (req: Request, res
 })
 
 //Get Users by id
-userRouter.get('/:id', authorizationMiddleware(['Admin'], true), async (req: Request, res: Response, next: NextFunction) => {
+userRouter.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     
     let { id } = req.params
     
@@ -41,7 +41,7 @@ userRouter.get('/:id', authorizationMiddleware(['Admin'], true), async (req: Req
 })
 
 // Save a New User
-userRouter.post('/', authorizationMiddleware(['Admin']), async (req: Request, res: Response, next: NextFunction) => {
+userRouter.post('/', async (req: Request, res: Response, next: NextFunction) => {
    
     let { username, password, firstName, lastName, email, role } = req.body
 
@@ -86,7 +86,7 @@ userRouter.post('/', authorizationMiddleware(['Admin']), async (req: Request, re
 })
     
 // Update a User
-userRouter.patch('/', authorizationMiddleware(['Admin']), async (req: Request, res: Response, next: NextFunction) => {
+userRouter.patch('/', async (req: Request, res: Response, next: NextFunction) => {
     
         let { userId, username, password, firstName, lastName, email, role} = req.body
         
